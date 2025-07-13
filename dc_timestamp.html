@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Discord Timestamp Converter</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #121212;
+      color: #e0e0e0;
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+    .container {
+      background: #1f1f1f;
+      border-radius: 12px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.7);
+    }
+    h1 {
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 0.3rem;
+      color: #bbb;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.7rem 1rem;
+      border-radius: 8px;
+      border: none;
+      margin-bottom: 1.25rem;
+      background: #292929;
+      color: #eee;
+      font-size: 1rem;
+      transition: background 0.3s ease;
+    }
+    input:focus, select:focus {
+      outline: none;
+      background: #3a3a3a;
+    }
+    button {
+      background: #5865f2;
+      color: white;
+      font-weight: 600;
+      padding: 0.8rem 1.2rem;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+      font-size: 1rem;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #4752c4;
+    }
+    .output {
+      margin-top: 1rem;
+      background: #2b2b2b;
+      border-radius: 10px;
+      padding: 1rem;
+      font-family: monospace;
+      word-break: break-all;
+      user-select: all;
+    }
+    .footer {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: #666;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Discord Timestamp Converter</h1>
+
+    <label for="datetime">Select Date & Time</label>
+    <input type="datetime-local" id="datetime" />
+
+    <label for="timezone">Choose Timezone</label>
+    <select id="timezone"></select>
+
+    <label for="format">Select Format</label>
+    <select id="format">
+      <option value="f">Short Date/Time (e.g. 16:20)</option>
+      <option value="F" selected>Long Date/Time (e.g. Tuesday, June 1, 2021 16:20)</option>
+      <option value="d">Short Date (e.g. 06/01/2021)</option>
+      <option value="D">Long Date (e.g. June 1, 2021)</option>
+      <option value="t">Short Time (e.g. 16:20)</option>
+      <option value="T">Long Time (e.g. 16:20:30)</option>
+      <option value="R">Relative (e.g. 2 months ago)</option>
+    </select>
+
+    <button id="convertBtn">Convert</button>
+
+    <div id="output" class="output" tabindex="0"></div>
+    <div class="footer">Click output to copy</div>
+  </div>
+
+<script>
+  const { DateTime } = luxon;
+  const datetimeInput = document.getElementById('datetime');
+  const formatSelect = document.getElementById('format');
+  const timezoneSelect = document.getElementById('timezone');
+  const outputDiv = document.getElementById('output');
+  const convertBtn = document.getElementById('convertBtn');
+
+  // Populate timezone dropdown
+  const timezones = Intl.supportedValuesOf?.('timeZone') || [
+    "UTC", "America/New_York", "Europe/London", "Asia/Tokyo", "Asia/Taipei"
+  ];
+  timezones.forEach(tz => {
+    const option = document.createElement('option');
+    option.value = tz;
+    option.textContent = tz;
+    timezoneSelect.appendChild(option);
+  });
+  timezoneSelect.value = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  // Conversion function
+  function convertToDiscordTimestamp() {
+    const datetimeValue = datetimeInput.value;
+    const selectedZone = timezoneSelect.value;
+    const format = formatSelect.value;
+
+    if (!datetimeValue) {
+      outputDiv.textContent = 'Please select a valid date and time.';
+      return;
+    }
+
+    const dt = DateTime.fromISO(datetimeValue, { zone: selectedZone });
+    const unix = Math.floor(dt.toSeconds());
+    const discordTimestamp = `<t:${unix}:${format}>`;
+    outputDiv.textContent = discordTimestamp;
+  }
+
+  convertBtn.addEventListener('click', convertToDiscordTimestamp);
+
+  outputDiv.addEventListener('click', () => {
+    if (!outputDiv.textContent) return;
+    navigator.clipboard.writeText(outputDiv.textContent).then(() => {
+      outputDiv.textContent = 'Copied to clipboard! 🎉';
+      setTimeout(convertToDiscordTimestamp, 1500);
+    });
+  });
+
+  // Default date/time on load
+  window.addEventListener('load', () => {
+    const now = new Date();
+    datetimeInput.value = now.toISOString().slice(0, 16);
+    convertToDiscordTimestamp();
+  });
+</script>
+</body>
+</html>
